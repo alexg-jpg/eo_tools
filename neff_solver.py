@@ -42,7 +42,7 @@ def get_neff(d, wavelength, n1, n2):
 
 ############################################################# 
 def get_coupling_coeff(coupling_length,spacing,d, wavelength, n1, n2): 
-    printf("This is a placeholder")
+    print("This is a placeholder")
 
 
 
