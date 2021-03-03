@@ -22,10 +22,10 @@ epsilon_o = 8.85*10**(-14) #permittivity of free space [F/m]
 q = 1.602*10**(-19) # charge of an electron [C]
 temp = 300 # [K]
 pi = 3.14
-c = 2.98*10**(8)
+c = 3*10**(8)
 mu=4*pi*1e-7
 #############################################################
-def get_neff(d, wavelength, n1, n2):
+def get_neff0(d, wavelength, n1, n2):
 #Obtain effective index profile for our waveguide
     k0 = 2*pi / wavelength
     k = n2*k0
@@ -69,36 +69,42 @@ def get_field_profile(d, wavelength, n1, n2):
     nx=np.concatenate((n1*np.ones(pts), n2*np.ones(pts), n1*np.ones(pts)),axis=None)
      
     print(nx)
-    mode_results = get_neff(220e-9,1.55e-6,1.444,3.47) #mode_results = [neff,h_m,q_m,beta,k]
+    mode_results = get_neff0(220e-9,1.55e-6,1.444,3.47) #mode_results = [neff,h_m,q_m,beta,k]
 
     neff = mode_results[0]
     h_m = mode_results[1]
     q_m = mode_results[2]
+    qb=(n2**2)/(n1**2)*q_m #Syntax taken from Matlab script by Lukas Chrostowski, 2012
     beta = mode_results[3]
     k0 = mode_results[4]
-    omega = c / n2 * k0
+    omega0 = c * k0
     
     
     #Define normalization coefficient C:
+    #Each mode with field E_m has power flow of 1 W.
     #More information on this can be found in Chapter 3.2 of Photonics by Yariv and Yeh
-    C = 2 * h_m * np.power((omega * mu / (beta * (d + 1/q_m + 1/q_m)*(h_m**2 + q_m**2))),0.5)
+    C = 2 * h_m * np.sqrt((omega0 * mu / (beta * (d + 1/q_m + 1/q_m)*(h_m**2 + q_m**2))))
     print(C)
     E = np.zeros(pts*3)
     for i in range(0,len(C)):
         #region 1 E field
-        E1 = C[i]*np.exp(q_m*(x1+d/2))
+        E1 = C[i]*h_m[i]/qb[i]*np.exp(q_m[i]*(x1+d/2))
         #region 2 E field
-        E2 = C[i]*(np.cos(h_m[i]*(x2+d/2))-q/h_m[i]*np.sin(h_m[i]*(x2+d/2)))
+        E2 = C[i]*(h_m[i]/qb[i]*np.cos(h_m[i]*(x2+d/2))+np.sin(h_m[i]*(x2+d/2)))
 
         #region 3 E field. We're assuming that the refractive indexes of the BOX and cladding are identical.
-        E3 = C[i]*(np.cos(h_m[i]*d)+q_m[i] / h_m[i] * np.sin(h_m[i]*d))*np.exp(-h_m[i]*(x3-d/2))
+        E3 = C[i]*(h_m[i]/qb[i]*np.cos(h_m[i]*d)+np.sin(h_m[i]*d))*np.exp(-q_m[i]*(x3-d/2))
 
         E += np.concatenate((E1,E2,E3),axis=None)
-
+    
     x = np.concatenate((x1,x2,x3), axis=None)
     plt.plot(x,E)
     plt.show()
+    return [x,E]
 
+def get_neffV(d, wavelength, n1, n2):
+
+    [x,E] = get_field_profile(220e-9,1.55e-6,1.444,3.47)
 
     
 
