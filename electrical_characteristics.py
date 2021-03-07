@@ -27,6 +27,7 @@ epsilon_sio =3.9
 q = 1.602*10**(-19) # charge of an electron [C]
 temp = 300 # [K]
 pi = 3.14
+
 mu_n = 364
 mu_p = 205
 
@@ -37,26 +38,52 @@ mu_p = 205
 #l_n = np.sqrt(d_n*tau_n) # diffusion length for electrons
 
 
-NPOINTS = 100
+NPOINTS = 1000
 #############################################################
 
-def get_carrier_concentrations(N_A,N_D,V,junction_width):
-    p_0 = n_i**2 / N_A
-    n_0 = n_i**2 / N_D
+def get_carrier_concentrations(N_A,N_D,V,w_slab,w_rib,w_d, w_dn, w_dp, x_offset):
+    p_0n = n_i**2 / N_D #minority carriers on n side.
+    n_0p = n_i**2 / N_A #minority carriers on p side.
 
-    x = np.linspace(0,junction_width,NPOINTS)
-
-    n_0_profile = np.full((1,int(NPOINTS/2)),n_0 *-1)
-    p_0_profile = np.full((1,int(NPOINTS/2)),p_0)
+    x = np.linspace(-w_slab/2,w_slab/2,NPOINTS)
     
+    iwdp = (abs(x + w_dp-x_offset)).argmin()
+    iwdn = (abs(x - w_dn-x_offset)).argmin()
+    
+    w_dp *= -1
+    w_dp += x_offset
+
+    w_dn += x_offset
+    xp = x[0:iwdp]
+    xn = x[iwdn:1000]
+    #Begin with minority carrier concentration in p region.
+    n_xp = n_0p*((np.exp(q*V/(k_b*temp))-1) * (1-abs((w_dp-xp)/(w_dp - w_slab))))
+    p_xn = p_0n*((np.exp(q*V/(k_b*temp))-1) * (1-abs((w_dn-xn)/(w_slab - w_dn))))
+
+    #Depletion region shall be empty.
+    n_xd = np.zeros(iwdn-iwdp)
+    p_xd = n_xd
+
+    n_xn = np.full(NPOINTS - iwdn,N_D) # is this correct?????
+    p_xp = np.full(iwdp,N_A) 
+
+    n_profile = np.concatenate((n_xp,n_xd,n_xn), axis=None)
+
+    p_profile = np.concatenate((p_xp,p_xd,p_xn), axis=None)
+
+
+    
+    mpl.plot(x,n_profile)
+    mpl.show()
     #carrier_profile = np.append(n_0_profile,p_0_profile)
+    
+    #For long base assumption, we are assuming that diffusion length is around same size or smaller
+    #than base length.
     #Use einstein's relation for obtaining diffusion const
 
     
     
 
-    mpl.plot(x,carrier_profile)
-    mpl.show()
 def get_depletion_width(N_A,N_D,V_bi,V):
     inner = ((2*epsilon_0 *epsilon_s)/q)*((N_A+N_D)/(N_A*N_D))*(V_bi-V-(2*k_b*temp)/q)
     w_d = np.sqrt(inner)
@@ -70,6 +97,8 @@ def get_depletion_width(N_A,N_D,V_bi,V):
     w_dp_tb = w_d_tb / (1 + (N_A/N_D))
     w_dn_tb = w_d_tb / (1 + (N_D/N_A))
 
+
+    #Express as m instead of cm.
     w_d *=0.01
     w_dp *=0.01
     w_dn *=0.01
@@ -105,18 +134,20 @@ def get_c_vertical(w_d,t_p,t_n):
     return c_top
 
 def get_t(w_dp,w_dn,w_dp_tb,w_dn_tb,w_rib):
-    #start with expression for x_p, x_n
     #Given N_a |x_p| = N_d |x_n
+    t_n = 2*w_dn_tb / np.pi
+    t_p = 2*w_dp_tb / np.pi
+    mpl.show()
+    return [t_p,t_n]
+
+def get_xpn(w_dp,w_dn,w_dp_tb,w_dn_tb,w_rib):
     v = np.linspace(-np.pi/2,0,NPOINTS)
     x_p = (2*w_dp_tb / np.pi) + w_dp - (4*w_dp_tb / np.pi * np.sin(v/2)**2)
     x_n = (4*w_dn_tb / np.pi * np.sin(v/2)**2) - ((2*w_dn_tb / np.pi) + w_dn)
     y = (2*w_dn_tb / np.pi)*(np.log(np.tan(np.pi/4 + v/2))-np.sin(v))
     
     mpl.plot(x_p,y,x_n,y)
-    t_n = 2*w_dn_tb / np.pi
-    t_p = 2*w_dp_tb / np.pi
-    mpl.show()
-    return [t_p,t_n]
+    return [x_p,x_n]
 
 def get_r_np(w_pn,w_rib,N_A,N_D,h_slab,L,w_dn,w_dp,x_offset,h_rib):
     w_pn *=100
@@ -136,7 +167,7 @@ def get_r_np(w_pn,w_rib,N_A,N_D,h_slab,L,w_dn,w_dp,x_offset,h_rib):
     return [r_p, r_n]
 
 ############################################################
-
+V_a = -1
 L = 0.75 * 2 * np.pi * 5e-6 # assuming radius is 5 um.
 x_offset = 120e-9
 w_pn = 1.2e-6
@@ -144,11 +175,11 @@ h_slab = 90e-9
 w_rib = 5e-7
 h_rib = 200e-9
 #Values below taken from Analytical Model and Fringing-Field Parasitics of Carrier-Depletion Silicon-on-Insulator Optical Modulation Diodes
-N_a = 5e18
-N_d = 5e18
+N_a = 5e17
+N_d = 5e17
 #get_carrier_concentrations(N_a,N_d,-1,1.5e-6)
 V_bi = get_vbi(N_a,N_d)
-w_d = get_depletion_width(N_a,N_d,V_bi,-1)
+w_d = get_depletion_width(N_a,N_d,V_bi,V_a)
 
 w_dp = w_d[1]
 w_dn = w_d[2]
@@ -167,3 +198,5 @@ r_np = get_r_np(w_pn,w_rib,N_a,N_d,h_slab,L,w_dn,w_dp,x_offset,h_rib)
 A = (q/w_pn)*(mu_p*mu_n*N_a*N_d/(mu_p*N_a + mu_n*N_d))
 bw = A/(2*np.pi)*(h_slab/h_rib)*(epsilon_0*epsilon_s / w_d + (c_f + c_vertical)/h_rib)**(-1)
 print(str(bw/(1e9)) + " GHz")
+
+get_carrier_concentrations(N_a,N_d,V_a,w_pn, w_rib,w_d, w_dn, w_dp, x_offset)
