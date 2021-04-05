@@ -38,7 +38,7 @@ mu_p = 205
 #l_n = np.sqrt(d_n*tau_n) # diffusion length for electrons
 
 
-NPOINTS = 1000
+NPOINTS = 1500
 #############################################################
 
 def get_carrier_concentrations(N_A,N_D,V,w_slab,w_rib,w_d, w_dn, w_dp, x_offset):
@@ -55,7 +55,7 @@ def get_carrier_concentrations(N_A,N_D,V,w_slab,w_rib,w_d, w_dn, w_dp, x_offset)
 
     w_dn += x_offset
     xp = x[0:iwdp]
-    xn = x[iwdn:1000]
+    xn = x[iwdn:len(x)]
     #Begin with minority carrier concentration in p region.
     n_xp = n_0p*((np.exp(q*V/(k_b*temp))-1) * (1-abs((w_dp-xp)/(w_dp - w_slab))))
     p_xn = p_0n*((np.exp(q*V/(k_b*temp))-1) * (1-abs((w_dn-xn)/(w_slab - w_dn))))
@@ -73,14 +73,14 @@ def get_carrier_concentrations(N_A,N_D,V,w_slab,w_rib,w_d, w_dn, w_dp, x_offset)
 
 
     
-    mpl.plot(x,n_profile)
+    mpl.plot(x,p_profile)
     mpl.show()
     #carrier_profile = np.append(n_0_profile,p_0_profile)
     
     #For long base assumption, we are assuming that diffusion length is around same size or smaller
     #than base length.
     #Use einstein's relation for obtaining diffusion const
-
+    return [n_profile,p_profile]
     
     
 
@@ -199,4 +199,4 @@ A = (q/w_pn)*(mu_p*mu_n*N_a*N_d/(mu_p*N_a + mu_n*N_d))
 bw = A/(2*np.pi)*(h_slab/h_rib)*(epsilon_0*epsilon_s / w_d + (c_f + c_vertical)/h_rib)**(-1)
 print(str(bw/(1e9)) + " GHz")
 
-get_carrier_concentrations(N_a,N_d,V_a,w_pn, w_rib,w_d, w_dn, w_dp, x_offset)
+get_carrier_concentrations(N_a,N_d,V_a,w_pn, w_rib,w_d, w_dn, w_dp, 0)
