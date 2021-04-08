@@ -72,9 +72,7 @@ def get_carrier_concentrations(N_A,N_D,V,w_slab,w_rib,w_d, w_dn, w_dp, x_offset)
     p_profile = np.concatenate((p_xp,p_xd,p_xn), axis=None)
 
 
-    
-    mpl.plot(x,p_profile)
-    mpl.show()
+
     #carrier_profile = np.append(n_0_profile,p_0_profile)
     
     #For long base assumption, we are assuming that diffusion length is around same size or smaller
@@ -137,7 +135,7 @@ def get_t(w_dp,w_dn,w_dp_tb,w_dn_tb,w_rib):
     #Given N_a |x_p| = N_d |x_n
     t_n = 2*w_dn_tb / np.pi
     t_p = 2*w_dp_tb / np.pi
-    mpl.show()
+   
     return [t_p,t_n]
 
 def get_xpn(w_dp,w_dn,w_dp_tb,w_dn_tb,w_rib):
@@ -146,7 +144,7 @@ def get_xpn(w_dp,w_dn,w_dp_tb,w_dn_tb,w_rib):
     x_n = (4*w_dn_tb / np.pi * np.sin(v/2)**2) - ((2*w_dn_tb / np.pi) + w_dn)
     y = (2*w_dn_tb / np.pi)*(np.log(np.tan(np.pi/4 + v/2))-np.sin(v))
     
-    mpl.plot(x_p,y,x_n,y)
+    
     return [x_p,x_n]
 
 def get_r_np(w_pn,w_rib,N_A,N_D,h_slab,L,w_dn,w_dp,x_offset,h_rib):
@@ -167,6 +165,7 @@ def get_r_np(w_pn,w_rib,N_A,N_D,h_slab,L,w_dn,w_dp,x_offset,h_rib):
     return [r_p, r_n]
 
 ############################################################
+'''
 V_a = -1
 L = 0.75 * 2 * np.pi * 5e-6 # assuming radius is 5 um.
 x_offset = 120e-9
@@ -200,3 +199,4 @@ bw = A/(2*np.pi)*(h_slab/h_rib)*(epsilon_0*epsilon_s / w_d + (c_f + c_vertical)/
 print(str(bw/(1e9)) + " GHz")
 
 get_carrier_concentrations(N_a,N_d,V_a,w_pn, w_rib,w_d, w_dn, w_dp, 0)
+'''
